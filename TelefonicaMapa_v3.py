@@ -83,8 +83,7 @@ app.layout = html.Div(
                         ),
                         html.H2("Análisis de Tráfico de consumo"),
                         html.P(
-                            """Seleccione diversos días utilizando el selector de fechas 
-                            seleccionando diferentes marcos de tiempo en el histograma."""
+                            """Seleccione el lunes de la semana que desea visualizar utilizando el calendario."""
                         ),
                         # dropdown para fecha
                         html.Div(
@@ -169,7 +168,7 @@ app.layout = html.Div(
                             className="text-padding",
                             children=[
                                 "Seleccione cualquiera de las barras en el histograma "
-                                "para seccionar los datos por tiempo."
+                                "para visualizar el consumo de datos en ese periodo de tiempo."
                             ],
                         ),
                     ],
