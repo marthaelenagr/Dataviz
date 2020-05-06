@@ -81,7 +81,7 @@ app.layout = html.Div(
                             className="logo",
                             src=app.get_asset_url("telefonica-logo.png"),
                         ),
-                        html.H2("Análisis de Tráfico de consumo"),
+                        html.H2("Análisis de Tráfico de Datos"),
                         html.P(
                             """Seleccione el lunes de la semana que desea visualizar utilizando el calendario."""
                         ),
@@ -204,7 +204,7 @@ def update_figure(datePicked, selectedLocation, chosen_tech, chosen_plan):
             lat=df_sub["latitud"],
             marker=dict(
                 showscale=True,
-                # color=np.append(np.insert(listCoords.index.hour, 0, 0), 23),
+                color=df_sub['sum_bytes'],
                 opacity=0.5,
                 size=5,
                 colorscale=[
@@ -226,7 +226,7 @@ def update_figure(datePicked, selectedLocation, chosen_tech, chosen_plan):
                     [1.0, "#613099"],
                 ],
                 colorbar=dict(
-                    title="Time of<br>Day",
+                    title="Consumo<br>Datos",
                     x=0.93,
                     xpad=0,
                     nticks=24,
@@ -236,7 +236,7 @@ def update_figure(datePicked, selectedLocation, chosen_tech, chosen_plan):
                 ),
             ),
             mode="markers",
-            # marker = {'color':'red'},
+            #marker = {'color':df_sub['sum_bytes']},
             # unselected = {'marker':{'opacity':1}},
             # selected = {'marker': {'opacity':0.5, 'size':25}},
             hoverinfo = 'text',
