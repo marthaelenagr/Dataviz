@@ -253,11 +253,11 @@ def update_figure(datePicked, selectedLocation, chosen_tech, chosen_plan):
     return {
         "data": locations,
         "layout": go.Layout(
+            margin={"r":0,"t":0,"l":0,"b":0}, #get rid of default margins
             uirevision="foo",
             clickmode="event+select",
             hovermode="closest",
             hoverdistance=2,
-            title=dict(text="Telefónica", font=dict(size=50, color="green")),
             mapbox=dict(
                 accesstoken=mapbox_access_token,
                 bearing=25,
