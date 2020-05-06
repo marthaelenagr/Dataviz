@@ -93,9 +93,8 @@ app.layout = html.Div(
                                 dcc.DatePickerSingle(
                                     id="date-picker",
                                     min_date_allowed=dt(2019, 10, 4),
-                                    max_date_allowed=dt(2010, 11, 5),
+                                    max_date_allowed=dt(2019, 11, 5),
                                     initial_visible_month=dt(2019, 10, 4),
-                                    date=dt(2019, 10, 4).date(),
                                     display_format="MMMM D, YYYY",
                                     style={"border": "0px solid black"},
                                 )
@@ -165,18 +164,19 @@ app.layout = html.Div(
                 html.Div(
                     className="eight columns div-for-charts bg-grey",
                     children=[
-                        dcc.Graph(id="map-graph"),
+                        dcc.Graph(id="map-graph", style={"backgroundColor": "#343332"}),
                         html.Div(
                             className="text-padding",
                             children=[
-                                "Seleccione cualquiera de las barras en el histograma para seccionar los datos por tiempo."
+                                "Seleccione cualquiera de las barras en el histograma "
+                                "para seccionar los datos por tiempo."
                             ],
                         ),
                     ],
                 ),
             ],
         )
-    ]
+    ],
 )
 
 # Output de la gráfica
@@ -261,8 +261,8 @@ def update_figure(datePicked, selectedLocation, chosen_tech, chosen_plan):
             mapbox=dict(
                 accesstoken=mapbox_access_token,
                 bearing=25,
-                style="light",
-                center=dict(lat=25.5922, lon=-99.9962),
+                style="dark",
+                center=dict(lat=25.6823, lon=-100.3030),
                 pitch=40,
                 zoom=11.5,
             ),
