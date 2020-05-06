@@ -240,8 +240,8 @@ def update_figure(datePicked, selectedLocation, chosen_tech, chosen_plan):
             # marker = {'color':'red'},
             # unselected = {'marker':{'opacity':1}},
             # selected = {'marker': {'opacity':0.5, 'size':25}},
-            # hoverinfo = 'text' #,
-            # hovertext = df_sub['hov_txt'],
+            hoverinfo = 'text',
+            hovertext = df_sub['sum_bytes'],
         )
     ]
 
@@ -257,7 +257,6 @@ def update_figure(datePicked, selectedLocation, chosen_tech, chosen_plan):
             clickmode="event+select",
             hovermode="closest",
             hoverdistance=2,
-            title=dict(text="Telefónica", font=dict(size=50, color="green")),
             mapbox=dict(
                 accesstoken=mapbox_access_token,
                 bearing=25,
