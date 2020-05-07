@@ -197,6 +197,12 @@ def update_figure(datePicked, selectedLocation, chosen_tech, chosen_plan):
     if chosen_plan is not None:
         df_sub = df_sub[df_sub["tipo_plan"] == chosen_plan]
 
+    df_sub = (
+        df_sub.groupby(["sitio", "longitud", "latitud"])
+        .agg({"sum_bytes": "sum"})
+        .reset_index()
+    )
+
     # Create figure
     locations = [
         go.Scattermapbox(
@@ -235,12 +241,19 @@ def update_figure(datePicked, selectedLocation, chosen_tech, chosen_plan):
                     thicknessmode="pixels",
                 ),
             ),
-            mode="markers",
-            #marker = {'color':df_sub['sum_bytes']},
+            mode="markers+text",
+            # marker = {'color':df_sub['sum_bytes']},
             # unselected = {'marker':{'opacity':1}},
             # selected = {'marker': {'opacity':0.5, 'size':25}},
-            hoverinfo = 'text',
-            hovertext = df_sub['sum_bytes'],
+            # hoverinfo="text",
+            # hovertext=df_sub["sitio"],
+            hovertemplate=(
+                # "<b>%{sitio} </b><br>"
+                # "Datos Consumidos: %{text}<br>"
+                "latitud: %{lat}<br>"
+                "longitud: %{lon}<br>"
+                "<extra></extra>"
+            ),
         )
     ]
 
@@ -252,7 +265,7 @@ def update_figure(datePicked, selectedLocation, chosen_tech, chosen_plan):
     return {
         "data": locations,
         "layout": go.Layout(
-            margin={"r":0,"t":0,"l":0,"b":0}, #get rid of default margins
+            margin={"r": 0, "t": 0, "l": 0, "b": 0},  # get rid of default margins
             uirevision="foo",
             clickmode="event+select",
             hovermode="closest",
