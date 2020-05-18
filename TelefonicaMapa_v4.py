@@ -3,18 +3,10 @@
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import plotly as py
-import plotly.figure_factory as ff
-import plotly.express as px
 import plotly.graph_objs as go
-from plotly.graph_objs import *
-from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
-from plotly import tools
 from datetime import datetime as dt
 
 import dash
-import dash_table
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
@@ -60,156 +52,169 @@ list_of_locations = {
     "Tec de MTY": {"lat": 25.6514, "lon": -100.2895},
 }
 
-## Mapa Dinámico de Radio Bases en Área Metropolitana
 
 blackbold = {"color": "black", "font-weight": "bold"}
 
-mapbox_access_token = "pk.eyJ1IjoibWFyaWFqb3NldnoiLCJhIjoiY2s5OTU1OXRqMDh6bDNubngxaWVyMmZ0aiJ9.2-Wv-0scEzITavhaqSrUcA"
+mapbox_access_token = (
+    "pk.eyJ1IjoibWFyaWFqb3NldnoiLCJhIjoiY2s5OTU1OXRq"
+    "MDh6bDNubngxaWVyMmZ0aiJ9.2-Wv-0scEzITavhaqSrUcA"
+)
 app = dash.Dash(__name__)
 
-# Layout of Dash app
-app.layout = html.Div([
-    dcc.Tabs([
-        dcc.Tab(label='Analisis', children=[
-            dcc.Graph(
-                figure={
-                    'data': [
-                        {'x': [1, 2, 3], 'y': [4, 1, 2],
-                            'type': 'bar', 'name': 'SF'},
-                        {'x': [1, 2, 3], 'y': [2, 4, 5],
-                         'type': 'bar', 'name': u'Montréal'},
-                    ]
-                }
-            )
-        ]),
-        dcc.Tab(label='Mapa',
-            children=[
-                # Dash legend - checklists - map
-                html.Div(
-                    className="row",
-                    children=[
-                        # Column for user controls
-                        html.Div(
-                            className="four columns div-user-controls",
-                            children=[
-                                html.Img(
-                                    className="logo",
-                                    src=app.get_asset_url("telefonica-logo.png"),
-                                ),
-                                html.H2("Análisis de Tráfico de Datos"),
-                                html.P(
-                                    """Seleccione el lunes de la semana que desea visualizar utilizando el calendario."""
-                                ),
-                                # dropdown para fecha
-                                html.Div(
-                                    className="div-for-dropdown",
-                                    children=[
-                                        dcc.DatePickerSingle(
-                                            id="date-picker",
-                                            min_date_allowed=dt(2019, 10, 4),
-                                            max_date_allowed=dt(2019, 11, 5),
-                                            initial_visible_month=dt(2019, 10, 4),
-                                            display_format="MMMM D, YYYY",
-                                            style={"border": "0px solid black"},
-                                        )
-                                    ],
-                                ),
-                                # dropdowns
-                                # Change to side-by-side for mobile layout
-                                html.Div(
-                                    className="row",
-                                    children=[
-                                        # Dropdown for locations on map
-                                        html.Div(
-                                            className="div-for-dropdown",
-                                            children=[
-                                                dcc.Dropdown(
-                                                    id="location-dropdown",
-                                                    options=[
-                                                        {"label": i, "value": i}
-                                                        for i in list_of_locations
-                                                    ],
-                                                    placeholder="Seleccione una ubicación",
-                                                )
-                                            ],
-                                        ),
-                                        # Dropdown tipo tecnologia
-                                        html.Div(
-                                            className="div-for-dropdown",
-                                            children=[
-                                                dcc.Dropdown(
-                                                    id="tech_name",
-                                                    options=[
-                                                        {"label": str(b), "value": b}
-                                                        for b in sorted(
-                                                            df["tecnologia"].unique()
-                                                        )
-                                                    ],
-                                                    placeholder="Tipo de tecnología(s)",
-                                                )
-                                            ],
-                                        ),
-                                        # Dropdown tipo plan
-                                        html.Div(
-                                            className="div-for-dropdown",
-                                            children=[
-                                                dcc.Dropdown(
-                                                    id="tipo_plan",
-                                                    options=[
-                                                        {"label": str(b), "value": b}
-                                                        for b in sorted(
-                                                            df["tipo_plan"].unique()
-                                                        )
-                                                    ],
-                                                    placeholder="Tipo de plan(es)",
-                                                )
-                                            ],
-                                        ),
-                                    ],
-                                ),
-                                # ultimas lineas
-                                dcc.Markdown(children=["TEC de MTY, 2020"]),
-                            ],
-                        ),
-                        # Column for app graphs and plots
-                        html.Div(
-                            className="eight columns div-for-charts bg-grey",
-                            children=[
-                                dcc.Graph(id="map-graph", style={"backgroundColor": "#343332"}),
-                                html.Div(
-                                    className="text-padding",
-                                    children=[
-                                        "Seleccione cualquiera de las barras en el histograma "
-                                        "para visualizar el consumo de datos en ese periodo de tiempo."
-                                    ],
-                                ),
-                                dcc.Graph(id="histogram"),
-                            ],
-                        ),
-                    ],
-                )
-            ]
+analysis_tab = dcc.Tab(
+    label="Analisis",
+    children=[
+        dcc.Graph(
+            figure={
+                "data": [
+                    {"x": [1, 2, 3], "y": [4, 1, 2], "type": "bar", "name": "SF"},
+                    {
+                        "x": [1, 2, 3],
+                        "y": [2, 4, 5],
+                        "type": "bar",
+                        "name": u"Montréal",
+                    },
+                ]
+            }
+        )
+    ],
+)
+
+company_logo = html.Img(className="logo", src=app.get_asset_url("telefonica-logo.png"))
+title = html.H2("Análisis de Tráfico de Datos")
+instructions = html.P(
+    "Seleccione el lunes de la semana que desea visualizar utilizando el calendario."
+)
+
+# Dropdown para fecha
+date_dropdown = html.Div(
+    className="div-for-dropdown",
+    children=[
+        dcc.DatePickerSingle(
+            id="date-picker",
+            min_date_allowed=dt(2019, 10, 4),
+            max_date_allowed=dt(2019, 11, 5),
+            initial_visible_month=dt(2019, 10, 4),
+            display_format="MMMM D, YYYY",
+            style={"border": "0px solid black"},
+        )
+    ],
+)
+
+# Dropdown para lugares conocidos
+locations_dropdown = html.Div(
+    className="div-for-dropdown",
+    children=[
+        dcc.Dropdown(
+            id="location-dropdown",
+            options=[{"label": i, "value": i} for i in list_of_locations],
+            placeholder="Seleccione una ubicación",
+        )
+    ],
+)
+
+# Dropdown para tipo de tecnologia
+tech_dropdown = html.Div(
+    className="div-for-dropdown",
+    children=[
+        dcc.Dropdown(
+            id="tech_name",
+            options=[
+                {"label": str(b), "value": b} for b in sorted(df["tecnologia"].unique())
+            ],
+            placeholder="Tipo de tecnología(s)",
+        )
+    ],
+)
+
+# Dropdown para tipo de plan
+plan_dropdown = html.Div(
+    className="div-for-dropdown",
+    children=[
+        dcc.Dropdown(
+            id="tipo_plan",
+            options=[
+                {"label": str(b), "value": b} for b in sorted(df["tipo_plan"].unique())
+            ],
+            placeholder="Tipo de plan(es)",
+        )
+    ],
+)
+sidebar_map = html.Div(
+    className="four columns div-user-controls",
+    children=[
+        company_logo,
+        title,
+        instructions,
+        # dropdowns
+        html.Div(
+            className="row",
+            children=[date_dropdown, locations_dropdown, tech_dropdown, plan_dropdown,],
         ),
-        dcc.Tab(label='Voronoi', children=[
-            dcc.Graph(
-                figure={
-                    'data': [
-                        {'x': [1, 2, 3], 'y': [2, 4, 3],
-                            'type': 'bar', 'name': 'SF'},
-                        {'x': [1, 2, 3], 'y': [5, 4, 3],
-                         'type': 'bar', 'name': u'Montréal'},
-                    ]
-                }
-            )
-        ]),
-    ])
-])
+        # ultimas lineas
+        dcc.Markdown(children=["TEC de MTY, 2020"]),
+    ],
+)
 
-#######
+map_graph = html.Div(
+    className="eight columns div-for-charts bg-grey",
+    children=[
+        dcc.Graph(id="map-graph", style={"backgroundColor": "#343332"}),
+        html.Div(
+            className="text-padding",
+            children=html.P(
+                "Seleccione cualquiera de las barras en "
+                "el histograma visualizar el consumo de "
+                "datos en ese periodo de tiempo."
+            ),
+        ),
+        dcc.Graph(id="histogram"),
+    ],
+)
 
-#Obtener cantidad de bytes por semana. 
-# Pinta de otro color la barra seleccionada
-def get_selection(week, pickedTech, pickedPlan):
+map_tab = dcc.Tab(
+    label="Mapa",
+    children=[
+        # Dash legend - checklists - map
+        html.Div(
+            className="row",
+            children=[
+                # Column for user controls
+                sidebar_map,
+                # Column for app graphs and plots
+                map_graph,
+            ],
+        )
+    ],
+)
+
+voronoi_tab = dcc.Tab(
+    label="Voronoi",
+    children=[
+        dcc.Graph(
+            figure={
+                "data": [
+                    {"x": [1, 2, 3], "y": [2, 4, 3], "type": "bar", "name": "SF"},
+                    {
+                        "x": [1, 2, 3],
+                        "y": [5, 4, 3],
+                        "type": "bar",
+                        "name": u"Montréal",
+                    },
+                ]
+            }
+        )
+    ],
+)
+# Layout of Dash app
+app.layout = html.Div(
+    children=[dcc.Tabs(children=[analysis_tab, map_tab, voronoi_tab])]
+)
+
+
+def get_selection(pickedDate, pickedTech, pickedPlan):
+    # Obtener cantidad de bytes por semana.
+    # Pinta de otro color la barra seleccionada
     xVal = []
     yVal = []
     xSelected = []
@@ -241,31 +246,34 @@ def get_selection(week, pickedTech, pickedPlan):
     ]
 
     # Put selected WEEKS into a list of numbers xSelected
-    xSelected.extend([int(x) for x in week])
+    week = [1, 2, 3]
+    if week is not None:
+        xSelected.extend([int(x) for x in week])
 
-    #utilizando 10 semanas
+    # utilizando 10 semanas
     for i in range(10):
         # If bar is selected then color it white
         if i in xSelected and len(xSelected) < 10:
             colorVal[i] = "#FFFFFF"
         xVal.append(i)
-        #CAMBIAR ESTO A SEMANAS
+        # CAMBIAR ESTO A SEMANAS
         # Get the number of rides at a particular time
-        yVal.append(len(totalList[month][day][totalList[month][day].index.hour == i]))
+        yVal.append(i)
     return [np.array(xVal), np.array(yVal), np.array(colorVal)]
 
-#Output de histograma
+
+# Output de histograma
 # Update Histogram Figure based on Month, Day and Times Chosen
 @app.callback(
     Output("histogram", "figure"),
     [
-        Input("date-picker", "value"), 
-        Input("tech_name", "value"), 
-        Input("tipo_plan", "value")
+        Input("date-picker", "date"),
+        Input("tech_name", "value"),
+        Input("tipo_plan", "value"),
     ],
 )
 def update_histogram(pickedWeek, pickedTech, pickedPlan):
-    
+
     [xVal, yVal, colorVal] = get_selection(pickedWeek, pickedTech, pickedPlan)
 
     layout = go.Layout(
@@ -323,6 +331,7 @@ def update_histogram(pickedWeek, pickedTech, pickedPlan):
         layout=layout,
     )
 
+
 #######
 
 
@@ -351,6 +360,10 @@ def update_graph(datePicked, selectedLocation, chosen_tech, chosen_plan):
         .reset_index()
     )
 
+    latInitial = 25.6823
+    lonInitial = -100.3030
+    zoom = 10.0
+
     if selectedLocation:
         zoom = 15.0
         latInitial = list_of_locations[selectedLocation]["lat"]
@@ -359,13 +372,13 @@ def update_graph(datePicked, selectedLocation, chosen_tech, chosen_plan):
     # Create figure
     return go.Figure(
         data=[
-            Scattermapbox(
+            go.Scattermapbox(
                 lon=df_sub["longitud"],
                 lat=df_sub["latitud"],
-                #teras=df_sub["sum_bytes"]/1000000000000,
+                # teras=df_sub["sum_bytes"]/1000000000000,
                 marker=dict(
                     showscale=True,
-                    color=df_sub['sum_bytes'],
+                    color=df_sub["sum_bytes"],
                     opacity=0.5,
                     size=5,
                     colorscale=[
@@ -400,12 +413,12 @@ def update_graph(datePicked, selectedLocation, chosen_tech, chosen_plan):
                 hovertemplate=(
                     # "<b>%{sitio} </b><br>"
                     "(%{lat},%{lon})<br>"
-                    #"Consumo Datos: %{teras}<br>"
+                    # "Consumo Datos: %{teras}<br>"
                     "<extra></extra>"
                 ),
             ),
             # Plot important locations on the map
-            Scattermapbox(
+            go.Scattermapbox(
                 lat=[list_of_locations[i]["lat"] for i in list_of_locations],
                 lon=[list_of_locations[i]["lon"] for i in list_of_locations],
                 mode="markers",
@@ -414,22 +427,23 @@ def update_graph(datePicked, selectedLocation, chosen_tech, chosen_plan):
                 marker=dict(size=8, color="#ffa0a0"),
             ),
         ],
-        layout=Layout(
-            margin={"r": 0, "t": 0, "l": 0, "b": 0},  # get rid of default margins
+        layout=go.Layout(
+            # Get rid of default margins
+            margin={"r": 0, "t": 0, "l": 0, "b": 0},
             uirevision="foo",
             clickmode="event+select",
             hovermode="closest",
             hoverdistance=2,
             mapbox=dict(
                 accesstoken=mapbox_access_token,
-                bearing=25,
+                bearing=0,
                 style="dark",
-                center=dict(lat=25.6823, lon=-100.3030),
+                center={"lat": latInitial, "lon": lonInitial},
                 pitch=40,
-                zoom=10,
+                zoom=zoom,
             ),
         ),
-)
+    )
 
 
 app.run_server(debug=True)
