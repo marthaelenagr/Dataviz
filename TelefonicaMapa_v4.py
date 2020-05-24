@@ -188,24 +188,7 @@ map_tab = dcc.Tab(
     ],
 )
 
-voronoi_tab = dcc.Tab(
-    label="Voronoi",
-    children=[
-        dcc.Graph(
-            figure={
-                "data": [
-                    {"x": [1, 2, 3], "y": [2, 4, 3], "type": "bar", "name": "SF"},
-                    {
-                        "x": [1, 2, 3],
-                        "y": [5, 4, 3],
-                        "type": "bar",
-                        "name": u"Montréal",
-                    },
-                ]
-            }
-        )
-    ],
-)
+voronoi_tab = dcc.Tab()
 # Layout of Dash app
 app.layout = html.Div(
     children=[dcc.Tabs(children=[analysis_tab, map_tab, voronoi_tab])]

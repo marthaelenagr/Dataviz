@@ -11,66 +11,77 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 
+print("Cargando dataset")
 # Initialize data frame
 df = pd.read_csv("DataSet_Telefonica.csv")
 # eliminar instancias con nulls (20)
 df = df.dropna()
 
-
+print("Limpiando valores")
 # convertir formato de fecha: string -> datetime
 df["fecha"] = pd.to_datetime(df["fecha"], format="%Y-%m-%d")
 # convertir formato de hora: float -> int
 df["hora"] = df["hora"].astype(int)
+# Convertir tipos de plan
+df["plan"] = df["plan"].astype("category")
+print("Construyendo Sankey")
+unpopular_plans = list(
+    ("GU", "MY", "DD", "KO", "HA", "HW", "NB", "Z2", "DC", "Z7", "DH", "JQ")
+)
+unpopular_plans.extend(
+    ("HX", "HU", "J3", "KB", "FQ", "FD", "HT", "CS", "LQ", "FO", "CH", "L0")
+)
+unpopular_plans.extend(
+    ("FN", "HV", "KK", "BF", "FM", "GG", "FA", "ZR", "HM", "GO", "R2", "HO")
+)
+unpopular_plans.extend(("ZM", "Q9", "FP", "HH", "HC", "OZ", "KI", "MZ", "GH", "QG"))
+
+df["plan"].cat.remove_categories(unpopular_plans, inplace=True)
+df["plan"].cat.add_categories(["Otro"], inplace=True)
+df["plan"].fillna("Otro", inplace=True)
 # informacion sitio
 sitios = df[["sitio", "latitud", "longitud"]].drop_duplicates()
 
 
-#Data Frame para Sankey
+# Data Frame para Sankey
 
-df["plan"]= df["plan"].str.replace("GU", "Otro").str.replace("MY", "Otro").str.replace("DD",  
-"Otro").str.replace("KO", "Otro").str.replace("HA", "Otro").str.replace("HW","Otro").str.replace("NB", 
-"Otro").str.replace("Z2", "Otro").str.replace("DC","Otro").str.replace("Z7","Otro").str.replace("DH",
-"Otro").str.replace("JQ","Otro").str.replace("QG","Otro").str.replace("QG","Otro").str.replace("HX",
-"Otro").str.replace( "HU","Otro").str.replace("J3","Otro").str.replace( "KB","Otro").str.replace("FQ",
-"Otro").str.replace("FD","Otro").str.replace("HT","Otro").str.replace("CS", "Otro").str.replace("LQ",
-"Otro").str.replace("FO",  "Otro").str.replace("CH","Otro").str.replace("L0", "Otro").str.replace("FN", 
-"Otro").str.replace( "HV","Otro").str.replace("KK","Otro").str.replace("BF",  "Otro").str.replace("FM",
-"Otro").str.replace("GG","Otro").str.replace("FA","Otro").str.replace( "ZR","Otro").str.replace("HM",
-"Otro").str.replace("GO","Otro").str.replace("R2","Otro").str.replace("HO","Otro").str.replace("ZM",
-"Otro").str.replace( "Q9", "Otro").str.replace("FP","Otro").str.replace( "HH", "Otro").str.replace( "HC",
-"Otro").str.replace( "OZ", "Otro").str.replace("KI", "Otro").str.replace( "MZ", "Otro").str.replace( "GH","Otro")
-
-#Agrupar por tecnologia,tipo plan y plan 
-dfsankey2=df.groupby(["tecnologia", "tipo_plan"], as_index=False)['sum_bytes'].count()
-dfsankey3=df.groupby(["tipo_plan", "plan"], as_index=False)['sum_bytes'].count()
-dfsankey2.columns = ['a', 'b', 'Quantity']
-dfsankey3.columns = ['a', 'b', 'Quantity']
+# Agrupar por tecnologia,tipo plan y plan
+dfsankey2 = df.groupby(["tecnologia", "tipo_plan"], as_index=False)["sum_bytes"].count()
+dfsankey3 = df.groupby(["tipo_plan", "plan"], as_index=False)["sum_bytes"].count()
+dfsankey2.columns = ["a", "b", "Quantity"]
+dfsankey3.columns = ["a", "b", "Quantity"]
 dfsankey = dfsankey2.append(dfsankey3)
 
-#Agregar source y target del 
-all_nodes = dfsankey.a.values.tolist() + dfsankey.b.values.tolist() 
+# Agregar source y target del sankey
+all_nodes = dfsankey.a.values.tolist() + dfsankey.b.values.tolist()
 source_indices = [all_nodes.index(a) for a in dfsankey.a]
-target_indices = [all_nodes.index(b) for b in dfsankey.b] 
+target_indices = [all_nodes.index(b) for b in dfsankey.b]
 
-#graficar snaky
-fig = go.Figure(data=[go.Sankey(
-    node = dict(
-      pad = 20,
-      thickness = 20,
-      line = dict(color = "black", width = 1.0),
-      label =  all_nodes,
-    ),
+# graficar sankey
+fig = go.Figure(
+    data=[
+        go.Sankey(
+            node=dict(
+                pad=20,
+                thickness=20,
+                line=dict(color="black", width=1.0),
+                label=all_nodes,
+            ),
+            link=dict(
+                source=source_indices, target=target_indices, value=dfsankey.Quantity,
+            ),
+        )
+    ]
+)
 
-    link = dict(
-      source =  source_indices,
-      target =  target_indices,
-      value =  dfsankey.Quantity,
-))])
+fig.update_layout(
+    title_text="Tecnologias y Planes en Telefonica",
+    font=dict(size=10, color="white"),
+    plot_bgcolor="red",
+    paper_bgcolor="#343332",
+)
 
-fig.update_layout(title_text="Tecnologias y Planes en Telefonica",
-                     font=dict(size = 10, color = 'white'),
-                     plot_bgcolor="red",
-                     paper_bgcolor="#343332")
+print("Agrupando por semana")
 
 # DataFrame agrupado por semana
 grouped = df.groupby(["sitio", "tipo_plan", "tecnologia", "fecha"]).agg(
@@ -112,35 +123,29 @@ app = dash.Dash(__name__)
 analysis_tab = dcc.Tab(
     label="Analisis",
     children=[
-            html.Div(
-                    className="row",
+        html.Div(
+            className="row",
+            children=[
+                # Column for user controls
+                html.Div(
+                    className="four columns div-for-data",
                     children=[
-                        # Column for user controls
-                        html.Div(
-                            className="four columns div-for-data",
-                            children=[
-                                html.Img(
-                                    className="logo",
-                                    src=app.get_asset_url("telefonica-logo.png"),
-                                ),
-                                html.H2("Tecnologias y Planes"),
-                                html.P(
-                                    """Octubre 4, 2019 - Noviembre 5, 2019""",
-                                ),    
-                                html.P(
-                                    """614 Radio Bases""",
-                                ),          
-                            ]
-                          ),
-                        html.Div(
-                            className="eight columns div-for-chart bg-grey",
-                            children=[
-                                dcc.Graph(figure=fig),
-                            ],
-                          ),
-                      ]
-            ),
-   ],
+                        html.Img(
+                            className="logo",
+                            src=app.get_asset_url("telefonica-logo.png"),
+                        ),
+                        html.H2("Tecnologias y Planes"),
+                        html.P("""Octubre 4, 2019 - Noviembre 5, 2019""",),
+                        html.P("""614 Radio Bases""",),
+                    ],
+                ),
+                html.Div(
+                    className="eight columns div-for-chart bg-grey",
+                    children=[dcc.Graph(figure=fig),],
+                ),
+            ],
+        ),
+    ],
 )
 
 company_logo = html.Img(className="logo", src=app.get_asset_url("telefonica-logo.png"))
@@ -253,21 +258,7 @@ map_tab = dcc.Tab(
 
 voronoi_tab = dcc.Tab(
     label="Voronoi",
-    children=[
-        dcc.Graph(
-            figure={
-                "data": [
-                    {"x": [1, 2, 3], "y": [2, 4, 3], "type": "bar", "name": "SF"},
-                    {
-                        "x": [1, 2, 3],
-                        "y": [5, 4, 3],
-                        "type": "bar",
-                        "name": u"Montréal",
-                    },
-                ]
-            }
-        )
-    ],
+    children=[html.Iframe(src="voronoi.html", sandbox="allow-scripts")],
 )
 # Layout of Dash app
 app.layout = html.Div(
