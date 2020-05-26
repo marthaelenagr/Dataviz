@@ -111,17 +111,46 @@ list_of_locations = {
     "Tec de MTY": {"lat": 25.6514, "lon": -100.2895},
 }
 
-
-blackbold = {"color": "black", "font-weight": "bold"}
-
 mapbox_access_token = (
     "pk.eyJ1IjoibWFyaWFqb3NldnoiLCJhIjoiY2s5OTU1OXRq"
     "MDh6bDNubngxaWVyMmZ0aiJ9.2-Wv-0scEzITavhaqSrUcA"
 )
 app = dash.Dash(__name__)
+app.title = 'Dash Telefonica'
 
+
+# Tab Style
+
+tabs_styles = {
+    'height': '44px'
+}
+
+tab_style = {
+    'padding': '6px',
+    'fontWeight': 'bold',
+    'border': '2px solid #302f2f',
+    'backgroundColor': '#1e1e1e',
+    'color': 'white'
+}
+
+tab_selected_style = {
+    'padding': '6px',
+    'border': '2px solid #302f2f',
+    'backgroundColor': '#333232',
+    'color': 'white'
+}
+
+company_logo = html.Img(className="logo", src=app.get_asset_url("telefonica-logo.png"))
+title = html.H2("Análisis de Tráfico de Datos")
+instructions = html.P(
+    "Seleccione el lunes de la semana que desea visualizar utilizando el calendario."
+)
+
+# Tab 1 - Analisis
 analysis_tab = dcc.Tab(
     label="Analisis",
+    style=tab_style,
+    selected_style=tab_selected_style,
     children=[
         html.Div(
             className="row",
@@ -130,13 +159,11 @@ analysis_tab = dcc.Tab(
                 html.Div(
                     className="four columns div-for-data",
                     children=[
-                        html.Img(
-                            className="logo",
-                            src=app.get_asset_url("telefonica-logo.png"),
-                        ),
-                        html.H2("Tecnologias y Planes"),
-                        html.P("""Octubre 4, 2019 - Noviembre 5, 2019""",),
-                        html.P("""614 Radio Bases""",),
+                        company_logo,
+                        html.H2("Análisis exploratorio"),
+                        html.P("""Instancias de: Octubre 4 - Noviembre 5, 2019""",),
+                        html.P("""614 Radio Bases"""),
+                        html.P(""" TEC de MTY, 2020"""),
                     ],
                 ),
                 html.Div(
@@ -146,12 +173,6 @@ analysis_tab = dcc.Tab(
             ],
         ),
     ],
-)
-
-company_logo = html.Img(className="logo", src=app.get_asset_url("telefonica-logo.png"))
-title = html.H2("Análisis de Tráfico de Datos")
-instructions = html.P(
-    "Seleccione el lunes de la semana que desea visualizar utilizando el calendario."
 )
 
 # Dropdown para fecha
@@ -208,6 +229,8 @@ plan_dropdown = html.Div(
         )
     ],
 )
+
+# Menu con slicers  
 sidebar_map = html.Div(
     className="four columns div-user-controls",
     children=[
@@ -224,6 +247,7 @@ sidebar_map = html.Div(
     ],
 )
 
+#Mapa dinámico
 map_graph = html.Div(
     className="eight columns div-for-charts bg-grey",
     children=[
@@ -240,8 +264,11 @@ map_graph = html.Div(
     ],
 )
 
+# Tab 2 - Mapa Dinamico
 map_tab = dcc.Tab(
     label="Mapa",
+    style=tab_style,
+    selected_style=tab_selected_style,
     children=[
         # Dash legend - checklists - map
         html.Div(
@@ -256,13 +283,18 @@ map_tab = dcc.Tab(
     ],
 )
 
+# Tab 3 - Voronoi
 voronoi_tab = dcc.Tab(
     label="Voronoi",
+    style=tab_style,
+    selected_style=tab_selected_style,
     children=[html.Iframe(src="voronoi.html", sandbox="allow-scripts")],
 )
+
+
 # Layout of Dash app
 app.layout = html.Div(
-    children=[dcc.Tabs(children=[analysis_tab, map_tab, voronoi_tab])]
+    children=[dcc.Tabs(children=[analysis_tab, map_tab, voronoi_tab], style=tabs_styles)]
 )
 
 
@@ -386,9 +418,6 @@ def update_histogram(pickedWeek, pickedTech, pickedPlan):
     )
 
 
-#######
-
-
 # Output del mapa
 @app.callback(
     Output("map-graph", "figure"),
@@ -429,7 +458,7 @@ def update_graph(datePicked, selectedLocation, chosen_tech, chosen_plan):
             go.Scattermapbox(
                 lon=df_sub["longitud"],
                 lat=df_sub["latitud"],
-                # teras=df_sub["sum_bytes"]/1000000000000,
+                #teras=df_sub["sum_bytes"]/1000000000000,
                 marker=dict(
                     showscale=True,
                     color=df_sub["sum_bytes"],
@@ -463,13 +492,12 @@ def update_graph(datePicked, selectedLocation, chosen_tech, chosen_plan):
                         thicknessmode="pixels",
                     ),
                 ),
-                mode="markers+text",
-                hovertemplate=(
-                    # "<b>%{sitio} </b><br>"
-                    "(%{lat},%{lon})<br>"
-                    # "Consumo Datos: %{teras}<br>"
-                    "<extra></extra>"
-                ),
+                hovertext= [
+                                "Sitio: {} <br> Lat: {} <br> Lon: {} <br> Consumo Bytes: {}".format(i,j,k,l)
+	                            #for i,j,k,l in zip(df["sitio"], df["latitud"],df["longitud"], df["sum_bytes"])
+                                for i,j,k,l in zip(df["sitio"], df["latitud"],df["longitud"], df["sum_bytes"])
+                            ],
+		        mode="markers+text",
             ),
             # Plot important locations on the map
             go.Scattermapbox(
@@ -482,7 +510,6 @@ def update_graph(datePicked, selectedLocation, chosen_tech, chosen_plan):
             ),
         ],
         layout=go.Layout(
-            # Get rid of default margins
             margin={"r": 0, "t": 0, "l": 0, "b": 0},
             uirevision="foo",
             clickmode="event+select",
