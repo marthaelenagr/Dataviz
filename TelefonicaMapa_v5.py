@@ -3,6 +3,7 @@
 
 import pandas as pd
 import numpy as np
+import humanize 
 import plotly.graph_objs as go
 from datetime import datetime as dt
 
@@ -306,45 +307,40 @@ def get_selection(pickedDate, pickedTech, pickedPlan):
     xSelected = []
     colorVal = [
         "#F4EC15",
-        "#DAF017",
-        "#BBEC19",
-        "#9DE81B",
-        "#80E41D",
         "#66E01F",
         "#4CDC20",
-        "#34D822",
-        "#24D249",
-        "#25D042",
-        "#26CC58",
         "#28C86D",
-        "#29C481",
-        "#2AC093",
-        "#2BBCA4",
         "#2BB5B8",
-        "#2C99B4",
-        "#2D7EB0",
-        "#2D65AC",
         "#2E4EA4",
-        "#2E38A4",
-        "#3B2FA0",
-        "#4E2F9C",
-        "#603099",
     ]
 
-    # Put selected WEEKS into a list of numbers xSelected
-    week = [1, 2, 3]
-    if week is not None:
-        xSelected.extend([int(x) for x in week])
+    # Create new df for sum of weekly sum bytes
+    df_subHist = df
+    if pickedDate is not None:
+        df_subHist = df_subHist[df_subHist["fecha"] == pickedDate]
+    if pickedTech is not None:
+        df_subHist = df_subHist[df_subHist["tecnologia"] == pickedTech]
+    if pickedPlan is not None:
+        df_subHist = df_subHist[df_subHist["tipo_plan"] == pickedPlan]
 
-    # utilizando 10 semanas
-    for i in range(10):
+    df_subHist = df_subHist.groupby([ "tipo_plan", "tecnologia", "fecha"]).agg({"sum_bytes": "sum"})
+    df_subHist = df_subHist.reset_index()
+
+    weeks = df['fecha'].unique()
+
+    #if week is not None:
+        #xSelected.extend([int(x) for x in week])
+
+    # utilizando 4 semanas
+    for week in weeks:
         # If bar is selected then color it white
-        if i in xSelected and len(xSelected) < 10:
-            colorVal[i] = "#FFFFFF"
-        xVal.append(i)
+        #if i in xSelected and len(xSelected) < 10:
+            #colorVal[i] = "#FFFFFF"
+        xVal.append(np.datetime_as_string(week, unit='D'))
         # CAMBIAR ESTO A SEMANAS
         # Get the number of rides at a particular time
-        yVal.append(i)
+	
+        yVal.append(df_subHist[df_subHist["fecha"] == week]["sum_bytes"].sum())
     return [np.array(xVal), np.array(yVal), np.array(colorVal)]
 
 
@@ -373,11 +369,10 @@ def update_histogram(pickedWeek, pickedTech, pickedPlan):
         dragmode="select",
         font=dict(color="white"),
         xaxis=dict(
-            range=[-0.5, 23.5],
+            range=[-0.5, len(xVal)-0.5],
             showgrid=False,
             nticks=25,
             fixedrange=True,
-            ticksuffix=":00",
         ),
         yaxis=dict(
             range=[0, max(yVal) + max(yVal) / 4],
@@ -391,19 +386,19 @@ def update_histogram(pickedWeek, pickedTech, pickedPlan):
             dict(
                 x=xi,
                 y=yi,
-                text=str(yi),
+                text=humanize.naturalsize(yi),
                 xanchor="center",
                 yanchor="bottom",
                 showarrow=False,
                 font=dict(color="white"),
             )
-            for xi, yi in zip(xVal, yVal)
+            for xi, yi in enumerate(yVal)
         ],
     )
 
     return go.Figure(
         data=[
-            go.Bar(x=xVal, y=yVal, marker=dict(color=colorVal), hoverinfo="x"),
+            go.Bar(x=list(range(len(xVal))), y=yVal, marker=dict(color=colorVal), hoverinfo="x"),
             go.Scatter(
                 opacity=0,
                 x=xVal,
@@ -493,9 +488,9 @@ def update_graph(datePicked, selectedLocation, chosen_tech, chosen_plan):
                     ),
                 ),
                 hovertext= [
-                                "Sitio: {} <br> Lat: {} <br> Lon: {} <br> Consumo Bytes: {}".format(i,j,k,l)
+                                "Sitio: {} <br> Lat: {} <br> Lon: {} <br> Consumo Bytes: {}".format(i,j,k,humanize.naturalsize(l))
 	                            #for i,j,k,l in zip(df["sitio"], df["latitud"],df["longitud"], df["sum_bytes"])
-                                for i,j,k,l in zip(df["sitio"], df["latitud"],df["longitud"], df["sum_bytes"])
+                                for i,j,k,l in zip(df["sitio"], df["latitud"],df["longitud"],df_sub["sum_bytes"] )
                             ],
 		        mode="markers+text",
             ),
